@@ -217,8 +217,14 @@ go build ./...
 ### Run Tests
 
 ```bash
+# Run all tests across all packages
 go test ./...
+
+# Run with verbose output to see each test case
+go test ./... -v
 ```
+
+For details on how the mock tests work and what each test file covers, see **[TESTING.md](./TESTING.md)**.
 
 ## Swapping Storage (Why Ports Matter)
 
