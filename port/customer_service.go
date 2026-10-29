@@ -18,4 +18,5 @@ type CustomerService interface {
 	GetCustomers() ([]domain.Customer, error)
 	GetCustomerByID(id int) (domain.Customer, error)
 	DeleteCustomer(id int) error
+	UpdateCustomer(id int, customer domain.Customer) (domain.Customer, error)
 }

@@ -13,4 +13,5 @@ type CustomerRepository interface {
 	FindAll() ([]domain.Customer, error)
 	FindByID(id int) (domain.Customer, error)
 	Delete(id int) error
+	Update(id int, customer domain.Customer) (domain.Customer, error)
 }

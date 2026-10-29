@@ -44,6 +44,11 @@ func (m *mockRepository) FindByID(id int) (domain.Customer, error) {
 	return m.findByID, nil
 }
 
+func (m *mockRepository) Update(id int, customer domain.Customer) (domain.Customer, error) {
+	customer.ID = id
+	return customer, nil
+}
+
 func (m *mockRepository) Delete(id int) error {
 	m.deleteID = id
 	return m.deleteErr

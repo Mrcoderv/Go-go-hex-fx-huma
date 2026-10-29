@@ -163,4 +163,36 @@ func RegisterCustomerRoutes(api huma.API, handler *CustomerAPI) {
 		Path:        "/customers/{id}",
 		Summary:     "Delete a customer",
 	}, handler.DeleteCustomer)
+	huma.Register(api, huma.Operation{
+		OperationID: "put-customer",
+		Method:      "PUT",
+		Path:        "/customers/{id}",
+		Summary:     "Update a customer",
+	}, handler.UpdateCustomer)
+
+}
+
+func (h *CustomerAPI) UpdateCustomer(
+	ctx context.Context,
+	input *struct {
+		ID   int `path:"id" doc:"Customer ID"`
+		Body struct {
+			Name  string `json:"name" minLength:"1" doc:"Customer name"`
+			Email string `json:"email" format:"email" doc:"Customer email"`
+			Phone string `json:"phone" doc:"Customer phone"`
+		}
+	},
+) (*struct {
+	Body domain.Customer `json:"body"`
+}, error) {
+	customer, err := h.service.UpdateCustomer(input.ID, domain.Customer{Name: input.Body.Name, Email: input.Body.Email, Phone: input.Body.Phone})
+	if err != nil {
+		if errors.Is(err, port.ErrNotFound) {
+			return nil, huma.NewError(http.StatusNotFound, "customer not found")
+		}
+		return nil, err
+	}
+	return &struct {
+		Body domain.Customer `json:"body"`
+	}{Body: customer}, nil
 }

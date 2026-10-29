@@ -119,7 +119,26 @@ func (r *CustomerRepository) Delete(id int) error {
 		return port.ErrNotFound
 	}
 	return nil
+	
 }
+func (r *CustomerRepository) Update(id int, customer domain.Customer) (domain.Customer, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), queryTimeout)
+	defer cancel()
+
+	tag, err := r.pool.Exec(ctx,
+		`UPDATE customers SET name = $1, email = $2, phone = $3 WHERE id = $4`,
+		customer.Name, customer.Email, customer.Phone, id,
+	)
+	if err != nil {
+		return domain.Customer{}, err
+	}
+	if tag.RowsAffected() == 0 {
+		return domain.Customer{}, port.ErrNotFound
+	}
+	customer.ID = id
+	return customer, nil
+}
+
 
 // Compile-time check: this adapter must satisfy the output port.
 var _ port.CustomerRepository = (*CustomerRepository)(nil)

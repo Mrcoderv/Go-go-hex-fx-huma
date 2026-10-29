@@ -47,6 +47,18 @@ func (r *CustomerRepository) FindByID(id int) (domain.Customer, error) {
 	return domain.Customer{}, port.ErrNotFound
 }
 
+// Update replaces the customer with the given ID, or returns ErrNotFound.
+func (r *CustomerRepository) Update(id int, customer domain.Customer) (domain.Customer, error) {
+	for i, c := range r.customers {
+		if c.ID == id {
+			customer.ID = id
+			r.customers[i] = customer
+			return customer, nil
+		}
+	}
+	return domain.Customer{}, port.ErrNotFound
+}
+
 // Delete removes the customer with the given ID, or returns ErrNotFound.
 func (r *CustomerRepository) Delete(id int) error {
 	for i, c := range r.customers {
