@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"errors"
+	"io/fs"
 	"log"
 	"net"
 	"net/http"
@@ -14,6 +16,7 @@ import (
 	"customer-management/port"
 
 	"github.com/danielgtaylor/huma/v2"
+	"github.com/joho/godotenv"
 	"go.uber.org/fx"
 )
 
@@ -78,6 +81,13 @@ func StartHTTPServer(
 }
 
 func main() {
+	// Load .env into the process environment. Variables already set in the
+	// shell win over the file, so `DATABASE_URL=... go run ./cmd` still works.
+	// A missing .env is not an error: the app then falls back to in-memory.
+	if err := godotenv.Load(); err != nil && !errors.Is(err, fs.ErrNotExist) {
+		log.Printf("could not load .env: %v", err)
+	}
+
 	fx.New(
 		fx.Provide(
 			NewMux,

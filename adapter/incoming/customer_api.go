@@ -172,27 +172,35 @@ func RegisterCustomerRoutes(api huma.API, handler *CustomerAPI) {
 
 }
 
+// -------- PUT /customers/{id} --------
+
+type UpdateCustomerInput struct {
+	ID   int `path:"id" doc:"Customer ID"`
+	Body struct {
+		Name  string `json:"name" minLength:"1" doc:"Customer name"`
+		Email string `json:"email" format:"email" doc:"Customer email"`
+		Phone string `json:"phone" doc:"Customer phone"`
+	}
+}
+
+type UpdateCustomerOutput struct {
+	Body domain.Customer
+}
+
 func (h *CustomerAPI) UpdateCustomer(
 	ctx context.Context,
-	input *struct {
-		ID   int `path:"id" doc:"Customer ID"`
-		Body struct {
-			Name  string `json:"name" minLength:"1" doc:"Customer name"`
-			Email string `json:"email" format:"email" doc:"Customer email"`
-			Phone string `json:"phone" doc:"Customer phone"`
-		}
-	},
-) (*struct {
-	Body domain.Customer `json:"body"`
-}, error) {
-	customer, err := h.service.UpdateCustomer(input.ID, domain.Customer{Name: input.Body.Name, Email: input.Body.Email, Phone: input.Body.Phone})
+	input *UpdateCustomerInput,
+) (*UpdateCustomerOutput, error) {
+	customer, err := h.service.UpdateCustomer(input.ID, domain.Customer{
+		Name:  input.Body.Name,
+		Email: input.Body.Email,
+		Phone: input.Body.Phone,
+	})
 	if err != nil {
 		if errors.Is(err, port.ErrNotFound) {
 			return nil, huma.NewError(http.StatusNotFound, "customer not found")
 		}
 		return nil, err
 	}
-	return &struct {
-		Body domain.Customer `json:"body"`
-	}{Body: customer}, nil
+	return &UpdateCustomerOutput{Body: customer}, nil
 }
