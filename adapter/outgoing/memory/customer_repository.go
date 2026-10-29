@@ -1,27 +1,27 @@
-package adapter
+package memory
 
 import (
 	"customer-management/internal/domain"
 	"customer-management/port"
 )
 
-// InMemoryCustomerRepository stores customers in a slice.
+// CustomerRepository stores customers in a slice.
 // It implements the output port (port.CustomerRepository).
-type InMemoryCustomerRepository struct {
+type CustomerRepository struct {
 	customers []domain.Customer
 	nextID    int
 }
 
-// NewInMemoryCustomerRepository creates an empty in-memory repository.
-func NewInMemoryCustomerRepository() *InMemoryCustomerRepository {
-	return &InMemoryCustomerRepository{
+// NewCustomerRepository creates an empty in-memory repository.
+func NewCustomerRepository() *CustomerRepository {
+	return &CustomerRepository{
 		customers: make([]domain.Customer, 0),
 		nextID:    1,
 	}
 }
 
 // Save assigns a new ID and appends the customer.
-func (r *InMemoryCustomerRepository) Save(
+func (r *CustomerRepository) Save(
 	customer domain.Customer,
 ) (domain.Customer, error) {
 	customer.ID = r.nextID
@@ -31,14 +31,14 @@ func (r *InMemoryCustomerRepository) Save(
 }
 
 // FindAll returns a copy of all customers.
-func (r *InMemoryCustomerRepository) FindAll() ([]domain.Customer, error) {
+func (r *CustomerRepository) FindAll() ([]domain.Customer, error) {
 	customers := make([]domain.Customer, len(r.customers))
 	copy(customers, r.customers)
 	return customers, nil
 }
 
 // FindByID returns the customer with the given ID, or ErrNotFound.
-func (r *InMemoryCustomerRepository) FindByID(id int) (domain.Customer, error) {
+func (r *CustomerRepository) FindByID(id int) (domain.Customer, error) {
 	for _, c := range r.customers {
 		if c.ID == id {
 			return c, nil
@@ -48,7 +48,7 @@ func (r *InMemoryCustomerRepository) FindByID(id int) (domain.Customer, error) {
 }
 
 // Delete removes the customer with the given ID, or returns ErrNotFound.
-func (r *InMemoryCustomerRepository) Delete(id int) error {
+func (r *CustomerRepository) Delete(id int) error {
 	for i, c := range r.customers {
 		if c.ID == id {
 			r.customers = append(r.customers[:i], r.customers[i+1:]...)
@@ -57,3 +57,6 @@ func (r *InMemoryCustomerRepository) Delete(id int) error {
 	}
 	return port.ErrNotFound
 }
+
+// Compile-time check: this adapter must satisfy the output port.
+var _ port.CustomerRepository = (*CustomerRepository)(nil)

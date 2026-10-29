@@ -1,4 +1,4 @@
-package adapter
+package memory
 
 import (
 	"errors"
@@ -9,7 +9,7 @@ import (
 )
 
 func TestInMemorySave(t *testing.T) {
-	repo := NewInMemoryCustomerRepository()
+	repo := NewCustomerRepository()
 
 	customer := domain.Customer{Name: "Alice", Email: "alice@example.com", Phone: "123"}
 	created, err := repo.Save(customer)
@@ -25,7 +25,7 @@ func TestInMemorySave(t *testing.T) {
 }
 
 func TestInMemorySaveIncrementsID(t *testing.T) {
-	repo := NewInMemoryCustomerRepository()
+	repo := NewCustomerRepository()
 
 	c1, _ := repo.Save(domain.Customer{Name: "Alice"})
 	c2, _ := repo.Save(domain.Customer{Name: "Bob"})
@@ -38,7 +38,7 @@ func TestInMemorySaveIncrementsID(t *testing.T) {
 }
 
 func TestInMemoryFindAll(t *testing.T) {
-	repo := NewInMemoryCustomerRepository()
+	repo := NewCustomerRepository()
 	repo.Save(domain.Customer{Name: "Alice"})
 	repo.Save(domain.Customer{Name: "Bob"})
 
@@ -52,7 +52,7 @@ func TestInMemoryFindAll(t *testing.T) {
 }
 
 func TestInMemoryFindAllCopy(t *testing.T) {
-	repo := NewInMemoryCustomerRepository()
+	repo := NewCustomerRepository()
 	repo.Save(domain.Customer{Name: "Alice"})
 
 	first, _ := repo.FindAll()
@@ -66,7 +66,7 @@ func TestInMemoryFindAllCopy(t *testing.T) {
 }
 
 func TestInMemoryFindByIDFound(t *testing.T) {
-	repo := NewInMemoryCustomerRepository()
+	repo := NewCustomerRepository()
 	created, _ := repo.Save(domain.Customer{Name: "Alice"})
 
 	found, err := repo.FindByID(created.ID)
@@ -82,7 +82,7 @@ func TestInMemoryFindByIDFound(t *testing.T) {
 }
 
 func TestInMemoryFindByIDNotFound(t *testing.T) {
-	repo := NewInMemoryCustomerRepository()
+	repo := NewCustomerRepository()
 
 	_, err := repo.FindByID(999)
 	if err == nil {
@@ -94,7 +94,7 @@ func TestInMemoryFindByIDNotFound(t *testing.T) {
 }
 
 func TestInMemoryDelete(t *testing.T) {
-	repo := NewInMemoryCustomerRepository()
+	repo := NewCustomerRepository()
 	created, _ := repo.Save(domain.Customer{Name: "Alice"})
 
 	err := repo.Delete(created.ID)
@@ -109,7 +109,7 @@ func TestInMemoryDelete(t *testing.T) {
 }
 
 func TestInMemoryDeleteNotFound(t *testing.T) {
-	repo := NewInMemoryCustomerRepository()
+	repo := NewCustomerRepository()
 
 	err := repo.Delete(999)
 	if err == nil {

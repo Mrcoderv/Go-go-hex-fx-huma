@@ -27,10 +27,15 @@ cms/
 ├── port/                         # Ports (interfaces) — the hexagon boundary
 │   ├── customer_service.go       # INPUT port: interface handlers call
 │   └── customer_repository.go    # OUTPUT port: interface core calls
-├── adapter/                      # Adapters (framework & persistence)
-│   ├── customer_api.go           # HTTP handlers (depend on input port)
-│   ├── huma_api.go               # Huma API setup on net/http mux
-│   └── customer_repository.go    # In-memory repository (implements output port)
+├── adapter/
+│   ├── incoming/                 # INCOMING adapters: handle requests
+│   │   ├── customer_api.go       # HTTP handlers (depend on input port)
+│   │   └── huma_api.go           # Huma API setup on net/http mux
+│   └── outgoing/                 # OUTGOING adapters: save data
+│       ├── repository.go         # Factory: picks memory or postgres (main.go only sees the port)
+│       ├── memory/               # In-memory repository (implements output port)
+│       └── postgres/             # PostgreSQL repository (implements output port)
+├── docker-compose.yml            # Local PostgreSQL for development
 ├── go.mod                        # Module definition + dependencies
 ├── go.sum                        # Dependency checksums
 └── README.md                     # This file
@@ -55,7 +60,7 @@ type CustomerService interface {
 ```
 
 - **Who implements it**: `internal/core.CustomerService`
-- **Who depends on it**: `adapter.CustomerAPI` (HTTP handlers)
+- **Who depends on it**: `incoming.CustomerAPI` (HTTP handlers)
 - **Direction**: Adapter → Core
 
 ### Output Port (`port.CustomerRepository`)
@@ -72,7 +77,7 @@ type CustomerRepository interface {
 }
 ```
 
-- **Who implements it**: `adapter.InMemoryCustomerRepository`
+- **Who implements it**: `memory.CustomerRepository` and `postgres.CustomerRepository` (`adapter/outgoing/`)
 - **Who depends on it**: `internal/core.CustomerService`
 - **Direction**: Core → Adapter
 
@@ -169,6 +174,7 @@ Uses **Uber Fx** to wire everything together:
 | `go.uber.org/fx` | Dependency injection framework |
 | `github.com/danielgtaylor/huma/v2` | Web framework + OpenAPI |
 | `github.com/danielgtaylor/huma/v2/adapters/humago` | Huma adapter for net/http |
+| `github.com/jackc/pgx/v5` | PostgreSQL driver and connection pool |
 
 ## Getting Started
 
@@ -179,7 +185,7 @@ Go 1.27.0 or newer.
 ### Install Dependencies
 
 ```bash
-go mod tidy
+go mod tidy   # downloads pgx and updates go.sum
 ```
 
 ### Run the Server
@@ -224,16 +230,37 @@ go test ./...
 go test ./... -v
 ```
 
+Postgres integration tests are skipped unless `TEST_DATABASE_URL` is set:
+
+```bash
+docker compose up -d db
+TEST_DATABASE_URL="postgres://postgres:postgres@localhost:5432/customers?sslmode=disable" go test ./adapter/outgoing/postgres/... -v
+```
+
 For details on how the mock tests work and what each test file covers, see **[TESTING.md](./TESTING.md)**.
 
-## Swapping Storage (Why Ports Matter)
+## Choosing the Storage (In-Memory or PostgreSQL)
 
-To switch from in-memory to PostgreSQL:
-1. Create `adapter/postgres/customer_repository.go` implementing `port.CustomerRepository`
-2. Change `cmd/main.go` to provide the postgres adapter instead of the in-memory one
-3. **No changes needed** to `internal/core`, `port`, or HTTP handlers
+Both repositories implement `port.CustomerRepository`. The factory in `adapter/outgoing/repository.go` picks one at startup using the `DATABASE_URL` environment variable, so `cmd/main.go` never imports `memory` or `postgres`:
 
-This is the power of hexagonal architecture: the core doesn't know whether data lives in memory, Postgres, or a file.
+| `DATABASE_URL` | Repository used |
+|----------------|-----------------|
+| not set | In-memory (data is lost on restart) |
+| set | PostgreSQL (the `customers` table is created automatically) |
+
+To add another database, create a new folder under `adapter/outgoing/` and add one branch in the factory.
+
+```bash
+# In-memory (default)
+go run ./cmd
+
+# PostgreSQL
+docker compose up -d db
+DATABASE_URL="postgres://postgres:postgres@localhost:5432/customers?sslmode=disable" go run ./cmd
+```
+
+No changes were needed in `internal/core`, `port`, or the HTTP handlers. The in-memory adapter is kept (it is not replaced) so demos and tests still run without a database.
+
 ```bash
 
 mind map 
@@ -242,7 +269,7 @@ HTTP Client
     ▼
 ┌──────────────────────────┐
 │  ADAPTER (handlers)      │  ──depends on──►  INPUT PORT (interface)
-│  adapter/customer_api.go │                    port/customer_service.go
+│  adapter/incoming/        │                    port/customer_service.go
 └──────────────────────────┘
     │ calls interface methods
     ▼
@@ -255,11 +282,11 @@ HTTP Client
     ▼
 ┌──────────────────────────┐
 │  ADAPTER (repository)    │  ──implements──►  OUTPUT PORT
-│  adapter/customer_repo.go│
-│  InMemoryCustomerRepository│
+│  adapter/outgoing/        │
+│  memory | postgres       │
 └──────────────────────────┘
     │ reads/writes
     ▼
-   In-memory slice
+   In-memory slice  or  PostgreSQL
 
 ```

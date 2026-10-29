@@ -7,8 +7,9 @@ This project uses **mock-based unit testing** to verify each layer in isolation,
 | File | Package | What it tests | Mock used |
 |------|---------|---------------|-----------|
 | `internal/core/customer_service_test.go` | `core` | Core business logic | `mockRepository` (output port) |
-| `adapter/customer_api_test.go` | `adapter` | HTTP handlers | `mockService` (input port) |
-| `adapter/customer_repository_test.go` | `adapter` | In-memory repository | None (uses real implementation) |
+| `adapter/incoming/customer_api_test.go` | `incoming` | HTTP handlers | `mockService` (input port) |
+| `adapter/outgoing/memory/customer_repository_test.go` | `memory` | In-memory repository | None (uses real implementation) |
+| `adapter/outgoing/postgres/customer_repository_test.go` | `postgres` | PostgreSQL repository | None (real DB, skipped unless `TEST_DATABASE_URL` is set) |
 
 ## How the Mocks Work
 
@@ -46,7 +47,7 @@ Each test sets fields on the mock to control behavior:
 - `TestGetCustomerByIDNotFound` — sets `findErr: port.ErrNotFound`, verifies the core returns `ErrNotFound`.
 - `TestDeleteCustomerError` — sets `deleteErr: port.ErrNotFound`, verifies the error propagates.
 
-### HTTP Handler Test (`adapter/customer_api_test.go`)
+### HTTP Handler Test (`adapter/incoming/customer_api_test.go`)
 
 The HTTP handler (`CustomerAPI`) depends on the **input port** `port.CustomerService`. To test it without running an HTTP server, we create a fake service:
 
@@ -70,9 +71,9 @@ Each test controls the mock's behavior:
 - `TestGetCustomerByIDNotFound` — sets `getByIDErr: port.ErrNotFound`, verifies the handler returns an error.
 - `TestDeleteCustomerNotFound` — sets `deleteErr: port.ErrNotFound`, verifies the error propagates.
 
-### In-Memory Repository Test (`adapter/customer_repository_test.go`)
+### In-Memory Repository Test (`adapter/outgoing/memory/customer_repository_test.go`)
 
-This tests the **real** `InMemoryCustomerRepository` (no mock needed — it's the adapter itself):
+This tests the **real** `memory.CustomerRepository` (no mock needed — it's the adapter itself):
 
 - `TestInMemorySave` — verifies `Save` assigns ID 1.
 - `TestInMemorySaveIncrementsID` — verifies each `Save` increments the ID.
@@ -89,7 +90,7 @@ TEST                  MOCK              TESTS
 ─────────────────────────────────────────────────────────
 core test             mockRepository    → CustomerService (core)
 handler test          mockService       → CustomerAPI (adapter)
-repository test       (real impl)       → InMemoryCustomerRepository (adapter)
+repository test       (real impl)       → memory.CustomerRepository (adapter)
 ```
 
 This means:
@@ -109,7 +110,7 @@ go test ./... -v
 
 # Run tests for one package only
 go test ./internal/core/... -v
-go test ./adapter/... -v
+go test ./adapter/... -v   # postgres tests skip without TEST_DATABASE_URL
 ```
 
 Expected output (all passing):
@@ -121,7 +122,7 @@ Expected output (all passing):
 --- PASS: TestCreateCustomerServiceError (0.00s)
 ...
 PASS
-ok      customer-management/adapter     0.005s
+ok      customer-management/adapter/incoming     0.005s
 ok      customer-management/internal/core   0.003s
 ```
 

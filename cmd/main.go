@@ -5,9 +5,11 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
 	"time"
 
-	"customer-management/adapter"
+	"customer-management/adapter/incoming"
+	"customer-management/adapter/outgoing"
 	"customer-management/internal/core"
 	"customer-management/port"
 
@@ -19,12 +21,12 @@ func NewMux() *http.ServeMux {
 	return http.NewServeMux()
 }
 
-// ProvideCustomerRepository tells Fx how to turn the concrete
-// in-memory repository into the output port interface.
-func ProvideCustomerRepository(
-	repo *adapter.InMemoryCustomerRepository,
-) port.CustomerRepository {
-	return repo
+// NewCustomerRepository gives Fx the OUTPUT port. main.go does not know
+// which storage is behind it; the outgoing layer decides from DATABASE_URL.
+func NewCustomerRepository() (port.CustomerRepository, error) {
+	return outgoing.NewCustomerRepository(outgoing.Config{
+		DatabaseURL: os.Getenv("DATABASE_URL"),
+	})
 }
 
 // ProvideCustomerService tells Fx how to turn the concrete
@@ -37,9 +39,9 @@ func ProvideCustomerService(
 
 func RegisterRoutes(
 	api huma.API,
-	handler *adapter.CustomerAPI,
+	handler *incoming.CustomerAPI,
 ) {
-	adapter.RegisterCustomerRoutes(api, handler)
+	incoming.RegisterCustomerRoutes(api, handler)
 }
 
 func StartHTTPServer(
@@ -79,12 +81,11 @@ func main() {
 	fx.New(
 		fx.Provide(
 			NewMux,
-			adapter.NewInMemoryCustomerRepository,
-			ProvideCustomerRepository,
+			NewCustomerRepository,
 			core.NewCustomerService,
 			ProvideCustomerService,
-			adapter.NewCustomerAPI,
-			adapter.NewHumaAPI,
+			incoming.NewCustomerAPI,
+			incoming.NewHumaAPI,
 		),
 		fx.Invoke(
 			RegisterRoutes,
