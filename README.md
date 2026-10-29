@@ -35,7 +35,7 @@ cms/
 │       ├── repository.go         # Factory: picks memory or postgres (main.go only sees the port)
 │       ├── memory/               # In-memory repository (implements output port)
 │       └── postgres/             # PostgreSQL repository (implements output port)
-├── docker-compose.yml            # Local PostgreSQL for development
+├── docker-compose.yml            # only for the  PostgreSQL  so that if the native local device db didn't work   .
 ├── go.mod                        # Module definition + dependencies
 ├── go.sum                        # Dependency checksums
 └── README.md                     # This file
