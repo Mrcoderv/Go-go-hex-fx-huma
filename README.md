@@ -110,7 +110,8 @@ type CustomerRepository interface {
 └──────────────────────┬──────────────────────────────────────┘
                        │ reads/writes
                        ▼
-              In-memory slice (customers)
+              postgarase
+
 ```
 
 ## Component Explanations (Simple Language)
