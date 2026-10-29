@@ -12,6 +12,7 @@ var ErrNotFound = errors.New("customer not found")
 // It defines the operations the HTTP handlers can ask the core to perform.
 // The core service (internal/core) implements this interface.
 // Handlers depend only on this interface, never on the concrete service.
+
 type CustomerService interface {
 	CreateCustomer(customer domain.Customer) (domain.Customer, error)
 	GetCustomers() ([]domain.Customer, error)

@@ -111,7 +111,7 @@ func TestListCustomersError(t *testing.T) {
 	}
 }
 
-func TestGetCustomerByIDFound(t *testing.T) {
+func TestGetCustomerByIDFound(t *testing.T) {  // random data to test the handler return false
 	svc := &mockService{getByID: domain.Customer{ID: 7, Name: "Bob"}}
 	api := NewCustomerAPI(svc)
 
@@ -140,7 +140,7 @@ func TestGetCustomerByIDNotFound(t *testing.T) {
 	}
 }
 
-func TestDeleteCustomer(t *testing.T) {
+func TestDeleteCustomer(t *testing.T) {  // random deletingt the dta of the id 3 .
 	svc := &mockService{}
 	api := NewCustomerAPI(svc)
 
