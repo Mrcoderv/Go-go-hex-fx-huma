@@ -288,6 +288,7 @@ HTTP Client
 └──────────────────────────┘
     │ reads/writes
     ▼
-   In-memory slice  or  PostgreSQL
+  PostgreSQL
+  
 
 ```

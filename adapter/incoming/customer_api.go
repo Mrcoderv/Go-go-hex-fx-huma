@@ -3,6 +3,7 @@ package incoming
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"customer-management/internal/domain"
@@ -117,6 +118,7 @@ func (h *CustomerAPI) DeleteCustomer(
 	ctx context.Context,
 	input *DeleteCustomerInput,
 ) (*DeleteCustomerOutput, error) {
+	fmt.Println("Deleting customer with ID:", input.ID)
 	err := h.service.DeleteCustomer(input.ID)
 	if err != nil {
 		if errors.Is(err, port.ErrNotFound) {
