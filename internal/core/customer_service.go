@@ -17,7 +17,7 @@ func NewCustomerService(repository port.CustomerRepository) *CustomerService {
 	return &CustomerService{repository: repository}
 }
 
-// CreateCustomer delegates saving to the repository. 
+// CreateCustomer delegates saving to the repository.
 // using the input port interface, it does not depend on the concrete repository implementation.
 func (s *CustomerService) CreateCustomer(
 	customer domain.Customer,
@@ -25,8 +25,7 @@ func (s *CustomerService) CreateCustomer(
 	return s.repository.Save(customer)
 }
 
-// GetCustomers returns every customer. 
-//
+// GetCustomers returns every customer.
 func (s *CustomerService) GetCustomers() ([]domain.Customer, error) {
 	return s.repository.FindAll()
 }
@@ -34,6 +33,10 @@ func (s *CustomerService) GetCustomers() ([]domain.Customer, error) {
 // GetCustomerByID returns a single customer by its ID.
 func (s *CustomerService) GetCustomerByID(id int) (domain.Customer, error) {
 	return s.repository.FindByID(id)
+}
+
+func (s *CustomerService) UpdateCustomer(id int, customer domain.Customer) (domain.Customer, error) {
+	return s.repository.Update(id, customer)
 }
 
 // DeleteCustomer removes a customer by its ID.

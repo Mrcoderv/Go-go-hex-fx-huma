@@ -45,6 +45,11 @@ func (m *mockService) GetCustomerByID(id int) (domain.Customer, error) {
 	return m.getByID, nil
 }
 
+func (m *mockService) UpdateCustomer(id int, customer domain.Customer) (domain.Customer, error) {
+	customer.ID = id
+	return customer, nil
+}
+
 func (m *mockService) DeleteCustomer(id int) error {
 	m.deleteID = id
 	return m.deleteErr

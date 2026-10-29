@@ -57,6 +57,7 @@ func (r *CustomerRepository) Save(customer domain.Customer) (domain.Customer, er
 		 RETURNING id`,
 		customer.Name, customer.Email, customer.Phone,
 	).Scan(&customer.ID)
+	fmt.Println("data added")
 	fmt.Println("customer id is created ", customer.ID)
 	if err != nil {
 		return domain.Customer{}, err
@@ -76,6 +77,7 @@ func (r *CustomerRepository) FindAll() ([]domain.Customer, error) {
 		return nil, err
 	}
 	defer rows.Close()
+	fmt.Println("data given")
 
 	customers := make([]domain.Customer, 0)
 	for rows.Next() {
@@ -97,7 +99,9 @@ func (r *CustomerRepository) FindByID(id int) (domain.Customer, error) {
 	err := r.pool.QueryRow(ctx,
 		`SELECT id, name, email, phone FROM customers WHERE id = $1`, id,
 	).Scan(&c.ID, &c.Name, &c.Email, &c.Phone)
+	fmt.Println("data found")
 	if errors.Is(err, pgx.ErrNoRows) {
+
 		return domain.Customer{}, port.ErrNotFound
 	}
 	if err != nil {
@@ -112,6 +116,7 @@ func (r *CustomerRepository) Delete(id int) error {
 	defer cancel()
 
 	tag, err := r.pool.Exec(ctx, `DELETE FROM customers WHERE id = $1`, id)
+	fmt.Println("data deleted")
 	if err != nil {
 		return err
 	}
@@ -119,6 +124,25 @@ func (r *CustomerRepository) Delete(id int) error {
 		return port.ErrNotFound
 	}
 	return nil
+
+}
+func (r *CustomerRepository) Update(id int, customer domain.Customer) (domain.Customer, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), queryTimeout)
+	defer cancel()
+
+	tag, err := r.pool.Exec(ctx,
+		`UPDATE customers SET name = $1, email = $2, phone = $3 WHERE id = $4`,
+		customer.Name, customer.Email, customer.Phone, id,
+	)
+	fmt.Println("data updated")
+	if err != nil {
+		return domain.Customer{}, err
+	}
+	if tag.RowsAffected() == 0 {
+		return domain.Customer{}, port.ErrNotFound
+	}
+	customer.ID = id
+	return customer, nil
 }
 
 // Compile-time check: this adapter must satisfy the output port.
